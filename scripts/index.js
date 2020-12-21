@@ -10,8 +10,10 @@ const updateEdge = (edge, nodeA, nodeB) => {
 const createScene = function () {
   const scene = new BABYLON.Scene(engine);
 
-  const camera = new BABYLON.FreeCamera("camera", new BABYLON.Vector3(0, 3, -15), scene);
-  camera.setTarget(BABYLON.Vector3.Zero());
+  const cameraPosition = new BABYLON.Vector3(0, 10, -35);
+  const cameraTarget = new BABYLON.Vector3(0, 10, 0);
+  const camera = new BABYLON.FreeCamera("camera", cameraPosition, scene);
+  camera.setTarget(cameraTarget);
   camera.keysUp.push(87); // W
   camera.keysDown.push(83); // D
   camera.keysLeft.push(65); // A
@@ -20,7 +22,8 @@ const createScene = function () {
 
   // Environment
 
-  const light = new BABYLON.PointLight("light", new BABYLON.Vector3(1, 20, 1), scene);
+  const lightPosition = new BABYLON.Vector3(0, 70, 0);
+  const light = new BABYLON.PointLight("light", lightPosition, scene);
   light.intensity = 0.7;
 
   const shadowGenerator = new BABYLON.ShadowGenerator(2048, light);
@@ -33,24 +36,58 @@ const createScene = function () {
 
   // Graph
 
+  const getNodeName = (number) => {
+    return `node_${number}`;
+  };
+
+  const getNodeNumber = (name) => {
+    return +name.split("_")[1];
+  };
+
+  const getEdgeName = (numberA, numberB) => {
+    return `edge_${numberA}_${numberB}`;
+  };
+
+  const getEdgeNumbers = (name) => {
+    return name
+      .split("_")
+      .slice(1)
+      .map((v) => parseInt(v, 10));
+  };
+
+  const createRandomPosition = () => {
+    const [xRange, yRange, zRange] = [7, 7, 7];
+    const [xOffset, yOffset, zOffset] = [0, 10, 0];
+    const x = (Math.random() - 0.5) * 2 * xRange + xOffset;
+    const y = (Math.random() - 0.5) * 2 * yRange + yOffset;
+    const z = (Math.random() - 0.5) * 2 * zRange + zOffset;
+    return new BABYLON.Vector3(x, y, z);
+  };
+
   const nodes = [];
-  for (let i = 0; i < 10; i++) {
-    let newNode = BABYLON.MeshBuilder.CreateSphere(`newNode${i}`, { diameter: 1, segments: 32 }, scene);
-    nodes.push(newNode);
-    let x = (Math.random() - 0.5) * 8;
-    let y = (Math.random() - 0.5) * 8 + 5;
-    let z = (Math.random() - 0.5) * 8;
-    newNode.position = new BABYLON.Vector3(x, y, z);
-    shadowGenerator.getShadowMap().renderList.push(newNode);
+  const numNodes = 50;
+  for (let i = 0; i < numNodes; i++) {
+    const name = getNodeName(i);
+    const radius = 0.3;
+    const segments = 16;
+    const node = BABYLON.MeshBuilder.CreateSphere(name, { diameter: radius * 2, segments: segments }, scene);
+    nodes.push(node);
+    node.position = createRandomPosition();
+    shadowGenerator.getShadowMap().renderList.push(node);
   }
 
   const edges = [];
+  const edgeProbability = 0.05;
   nodes.forEach((nodeA) => {
     nodes.forEach((nodeB) => {
-      if (Math.random() > 0.8) {
-        let newEdge = BABYLON.MeshBuilder.CreateCylinder(`newEdge`, { diameter: 0.3 }, scene);
-        edges.push([newEdge, nodeA, nodeB]);
-        shadowGenerator.getShadowMap().renderList.push(newEdge);
+      if (Math.random() < edgeProbability) {
+        const numberA = getNodeNumber(nodeA.name);
+        const numberB = getNodeNumber(nodeB.name);
+        const name = getEdgeName(numberA, numberB);
+        const radius = 0.05;
+        const edge = BABYLON.MeshBuilder.CreateCylinder(name, { diameter: radius * 2 }, scene);
+        edges.push([edge, nodeA, nodeB]);
+        shadowGenerator.getShadowMap().renderList.push(edge);
       }
     });
   });
@@ -59,7 +96,7 @@ const createScene = function () {
     edges.forEach((edgeSet, i) => {
       const st = Math.sin(performance.now() / 900 + i);
       const ct = Math.cos(performance.now() / 900 + i);
-      let [edge, nodeA, nodeB] = edgeSet;
+      const [edge, nodeA, nodeB] = edgeSet;
       nodeA.position.x += ct / 100;
       nodeA.position.y += st / 100;
       nodeA.position.z += (st * ct) / 100;
