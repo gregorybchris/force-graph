@@ -37,8 +37,8 @@ class Orchestrator {
   };
 
   start = async () => {
-    const graph = await this.fetchGraph();
-    // const graph = this.createGraph();
+    // const graph = await this.fetchGraph();
+    const graph = this.createGraph();
 
     // logRepr(graph, GraphFormats.MATRIX);
     // logRepr(graph, GraphFormats.LIST);
