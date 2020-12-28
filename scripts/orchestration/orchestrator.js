@@ -12,8 +12,17 @@ class Orchestrator {
     graph.addNode("a", { size: "big" });
     graph.addNode("b", { size: "small" });
     graph.addNode("c", { size: "small" });
-    graph.addEdge("a", "b");
-    graph.addEdge("a", "c");
+    graph.addNode("d", { size: "big" });
+    graph.addNode("e", { size: "small" });
+    graph.addNode("f", { size: "small" });
+
+    ["b", "c"].forEach((id) => {
+      graph.addEdge("a", id);
+    });
+    ["a", "b", "e", "f"].forEach((id) => {
+      graph.addEdge("d", id);
+    });
+
     return graph;
   };
 
@@ -45,7 +54,14 @@ class Orchestrator {
     logSummary(graph);
 
     const graphics = new Graphics(this.canvas);
-    graphics.init(graph);
+
+    graph.forEachNode((graphNode) => {
+      graphics.addNode(graphNode.id);
+    });
+
+    graph.forEachEdge((graphEdge) => {
+      graphics.addEdge(graphEdge.nodeA.id, graphEdge.nodeB.id);
+    });
   };
 }
 

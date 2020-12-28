@@ -5,16 +5,17 @@ import Edge from "./edge.js";
 class Graphics {
   constructor(canvas) {
     this.canvas = canvas;
-  }
 
-  init = (graph) => {
     const engine = new BABYLON.Engine(this.canvas, true);
     const [scene, shadowGenerator] = createScene(engine, this.canvas);
+    this.scene = scene;
+    this.shadowGenerator = shadowGenerator;
 
-    const edgeSets = this.createGraph(scene, shadowGenerator, graph);
+    this.nodes = {};
+    this.edgeSets = [];
 
     scene.registerBeforeRender(({ deltaTime }) => {
-      edgeSets.forEach((edgeSet, i) => {
+      this.edgeSets.forEach((edgeSet, i) => {
         const st = Math.sin(performance.now() / 900 + i);
         const ct = Math.cos(performance.now() / 900 + i);
         const [edge, nodeA, nodeB] = edgeSet;
@@ -28,7 +29,7 @@ class Graphics {
     engine.runRenderLoop(() => {
       scene.render();
     });
-  };
+  }
 
   createRandomPosition = () => {
     const [xRange, yRange, zRange] = [7, 7, 7];
@@ -39,23 +40,17 @@ class Graphics {
     return new BABYLON.Vector3(x, y, z);
   };
 
-  createGraph = (scene, shadowGenerator, graph) => {
-    const nodes = {};
-    graph.forEachNode((graphNode) => {
-      const node = new Node(graphNode.id, scene, shadowGenerator);
-      nodes[graphNode.id] = node;
-      node.mesh.position = this.createRandomPosition();
-    });
+  addNode = (id) => {
+    const node = new Node(id, this.scene, this.shadowGenerator);
+    this.nodes[id] = node;
+    node.mesh.position = this.createRandomPosition();
+  };
 
-    const edgeSets = [];
-    graph.forEachEdge((graphEdge) => {
-      const nodeA = nodes[graphEdge.nodeA.id];
-      const nodeB = nodes[graphEdge.nodeB.id];
-      const edge = new Edge(nodeA.id, nodeB.id, scene, shadowGenerator);
-      edgeSets.push([edge, nodeA, nodeB]);
-    });
-
-    return edgeSets;
+  addEdge = (idA, idB) => {
+    const nodeA = this.nodes[idA];
+    const nodeB = this.nodes[idB];
+    const edge = new Edge(nodeA.id, nodeB.id, this.scene, this.shadowGenerator);
+    this.edgeSets.push([edge, nodeA, nodeB]);
   };
 }
 
