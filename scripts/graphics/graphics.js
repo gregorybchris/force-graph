@@ -14,22 +14,16 @@ class Graphics {
     this.nodes = {};
     this.edgeSets = [];
 
-    scene.registerBeforeRender(({ deltaTime }) => {
-      this.edgeSets.forEach((edgeSet, i) => {
-        const st = Math.sin(performance.now() / 900 + i);
-        const ct = Math.cos(performance.now() / 900 + i);
-        const [edge, nodeA, nodeB] = edgeSet;
-        nodeA.mesh.position.x += ct / 100;
-        nodeA.mesh.position.y += st / 100;
-        nodeA.mesh.position.z += (st * ct) / 100;
-        edge.updateFromNodes(nodeA, nodeB);
-      });
-    });
-
     engine.runRenderLoop(() => {
-      scene.render();
+      this.scene.render();
     });
   }
+
+  onRender = (callback) => {
+    this.scene.registerBeforeRender(({ deltaTime }) => {
+      callback(deltaTime, this.nodes, this.edgeSets);
+    });
+  };
 
   createRandomPosition = () => {
     const [xRange, yRange, zRange] = [7, 7, 7];

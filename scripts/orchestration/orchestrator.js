@@ -1,66 +1,38 @@
 import Graphics from "../graphics/graphics.js";
-import Graph from "../simulation/graph.js";
-import { GraphFormats, logRepr, logSummary } from "../simulation/graph-logging.js";
+import Embedding from "../simulation/embedding.js";
+import Simulator from "../simulation/simulator.js";
 
 class Orchestrator {
-  constructor(canvas) {
+  constructor(canvas, graph) {
     this.canvas = canvas;
+    this.graph = graph;
+    this.embedding = new Embedding(this.graph);
+    this.simulator = new Simulator(this.embedding);
   }
 
-  createGraph = () => {
-    const graph = new Graph();
-    graph.addNode("a", { size: "big" });
-    graph.addNode("b", { size: "small" });
-    graph.addNode("c", { size: "small" });
-    graph.addNode("d", { size: "big" });
-    graph.addNode("e", { size: "small" });
-    graph.addNode("f", { size: "small" });
-
-    ["b", "c"].forEach((id) => {
-      graph.addEdge("a", id);
-    });
-    ["a", "b", "e", "f"].forEach((id) => {
-      graph.addEdge("d", id);
-    });
-
-    return graph;
-  };
-
-  fetchGraph = async () => {
-    const dataUrl = "https://chrisgregory.blob.core.windows.net/datasets/les-miserables.json";
-    const graphData = await fetch(dataUrl, {
-      mode: "cors",
-      headers: { "Access-Control-Allow-Origin": "*" },
-    }).then((response) => response.json());
-
-    const graph = new Graph();
-    const indexMap = {};
-    graphData.nodes.forEach((node, i) => {
-      indexMap[node.id] = i;
-      graph.addNode(i, { name: node.id, group: node.group });
-    });
-    graphData.links.forEach((edge) => {
-      graph.addEdge(indexMap[edge.source], indexMap[edge.target], false, edge.value);
-    });
-    return graph;
-  };
-
   start = async () => {
-    // const graph = await this.fetchGraph();
-    const graph = this.createGraph();
-
-    // logRepr(graph, GraphFormats.MATRIX);
-    // logRepr(graph, GraphFormats.LIST);
-    logSummary(graph);
-
     const graphics = new Graphics(this.canvas);
-
-    graph.forEachNode((graphNode) => {
+    this.graph.forEachNode((graphNode) => {
       graphics.addNode(graphNode.id);
     });
-
-    graph.forEachEdge((graphEdge) => {
+    this.graph.forEachEdge((graphEdge) => {
       graphics.addEdge(graphEdge.nodeA.id, graphEdge.nodeB.id);
+    });
+    graphics.onRender((deltaTime, nodes, edgeSets) => {
+      this.updatePositions(deltaTime, nodes, edgeSets);
+    });
+  };
+
+  updatePositions = (deltaTime, nodes, edgeSets) => {
+    this.simulator.next(deltaTime);
+    edgeSets.forEach((edgeSet, i) => {
+      const st = Math.sin(performance.now() / 900 + i);
+      const ct = Math.cos(performance.now() / 900 + i);
+      const [edge, nodeA, nodeB] = edgeSet;
+      nodeA.mesh.position.x += ct / 100;
+      nodeA.mesh.position.y += st / 100;
+      nodeA.mesh.position.z += (st * ct) / 100;
+      edge.updateFromNodes(nodeA, nodeB);
     });
   };
 }
