@@ -6,7 +6,7 @@ class Simulator {
 
   next = (deltaTime) => {
     if (this.count < 20) {
-      console.log(deltaTime);
+      // console.log(deltaTime);
       this.count++;
     }
   };

@@ -1,30 +1,21 @@
 import Graph from "../simulation/graph.js";
 
 class GraphFactory {
-  static fetch = async () => {
-    const dataUrl = "https://chrisgregory.blob.core.windows.net/datasets/les-miserables.json";
-    const graphData = await fetch(dataUrl, {
-      mode: "cors",
-      headers: { "Access-Control-Allow-Origin": "*" },
-    }).then((response) => response.json());
+  SYNTHETIC = "synthetic";
+  MISERABLES = "miserables";
 
-    const graph = new Graph();
-    const indexMap = {};
-    graphData.nodes.forEach((node, i) => {
-      indexMap[node.id] = i;
-      graph.addNode(i, { name: node.id, group: node.group });
-    });
-    graphData.links.forEach((edge) => {
-      graph.addEdge(indexMap[edge.source], indexMap[edge.target], false, edge.value);
-    });
-    return graph;
+  static fetch = async (graphName) => {
+    switch (graphName) {
+      case GraphFactory.SYNTHETIC:
+        return GraphFactory.fetchSynthetic();
+      case GraphFactory.MISERABLES:
+        return GraphFactory.fetchMiserables();
+      default:
+        console.error(`Graph name ${graphName} is invalid`);
+    }
   };
 
-  static fetchSimple = async () => {
-    return new Promise((resolve, reject) => resolve(GraphFactory.createSimple()));
-  };
-
-  static createSimple = () => {
+  static fetchSynthetic = async () => {
     const graph = new Graph();
     graph.addNode("a", { size: "big" });
     graph.addNode("b", { size: "small" });
@@ -40,6 +31,26 @@ class GraphFactory {
       graph.addEdge("d", id);
     });
 
+    return new Promise((resolve, reject) => resolve(graph));
+  };
+
+  static fetchMiserables = async () => {
+    const dataUrl = "https://chrisgregory.blob.core.windows.net/datasets/les-miserables.json";
+    const graphData = await fetch(dataUrl, {
+      mode: "cors",
+      headers: { "Access-Control-Allow-Origin": "*" },
+    }).then((response) => response.json());
+
+    const graph = new Graph();
+    const indexMap = {};
+    graphData.nodes.forEach((node, i) => {
+      const id = `${i}`;
+      indexMap[node.id] = id;
+      graph.addNode(id, { name: node.id, group: node.group });
+    });
+    graphData.links.forEach((edge) => {
+      graph.addEdge(indexMap[edge.source], indexMap[edge.target], false, edge.value);
+    });
     return graph;
   };
 }

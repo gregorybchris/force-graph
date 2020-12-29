@@ -8,17 +8,17 @@ class Orchestrator {
     this.graph = graph;
     this.embedding = new Embedding(this.graph);
     this.simulator = new Simulator(this.embedding);
+    this.graphics = new Graphics(this.canvas);
   }
 
   start = async () => {
-    const graphics = new Graphics(this.canvas);
     this.graph.forEachNode((graphNode) => {
-      graphics.addNode(graphNode.id);
+      this.graphics.addNode(graphNode.id);
     });
     this.graph.forEachEdge((graphEdge) => {
-      graphics.addEdge(graphEdge.nodeA.id, graphEdge.nodeB.id);
+      this.graphics.addEdge(graphEdge.nodeA.id, graphEdge.nodeB.id);
     });
-    graphics.onRender((deltaTime, nodes, edgeSets) => {
+    this.graphics.onRender((deltaTime, nodes, edgeSets) => {
       this.updatePositions(deltaTime, nodes, edgeSets);
     });
   };

@@ -38,6 +38,20 @@ class Graphics {
     const node = new Node(id, this.scene, this.shadowGenerator);
     this.nodes[id] = node;
     node.mesh.position = this.createRandomPosition();
+    node.mesh.actionManager = new BABYLON.ActionManager(this.scene);
+    node.mesh.actionManager.registerAction(
+      new BABYLON.ExecuteCodeAction(
+        {
+          trigger: BABYLON.ActionManager.OnPickTrigger,
+        },
+        (action) => {
+          const mesh = action.meshUnderPointer;
+          const name = mesh.name;
+          const id = Node.getId(name);
+          console.log("Clicked node", name, id);
+        }
+      )
+    );
   };
 
   addEdge = (idA, idB) => {
